@@ -31,4 +31,4 @@ jobs:
       - name: deploy pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: dist/public
+          folder: dist
