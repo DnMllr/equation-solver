@@ -87,7 +87,7 @@ class CompilerCtx {
       return ref.symbol;
     }
 
-    const sym = `ref-${rhs.value}-${this.counter.next()}`;
+    const sym = `r${this.counter.next()}`;
     this.ssaTable.set(rhs, sym);
     const node = new DependentNode(sym, {
       type: CalculationType.Ref,
@@ -101,33 +101,36 @@ class CompilerCtx {
   }
 
   addConst(rhs: ASTExpression, value: number): string {
-    const sym = `const-${this.counter.next()}`;
+    const sym = `c${this.counter.next()}`;
     this.ssaTable.set(rhs, sym);
     this.output.push(new BoundNode(sym, value));
     return sym;
   }
 
   addBinOp(rhs: BinOpNode): string {
-    const sym = `math-${this.counter.next()}`;
-    this.ssaTable.set(rhs, sym);
-
     let t: Exclude<CalculationType, CalculationType.Ref>;
+    let sym: string;
 
     switch (rhs.type) {
       case ASTNodeType.Mul:
         t = CalculationType.Mul;
+        sym = `m${this.counter.next()}`;
         break;
       case ASTNodeType.Add:
         t = CalculationType.Add;
+        sym = `a${this.counter.next()}`;
         break;
       case ASTNodeType.Sub:
         t = CalculationType.Sub;
+        sym = `s${this.counter.next()}`;
         break;
       case ASTNodeType.Div:
         t = CalculationType.Div;
+        sym = `d${this.counter.next()}`;
         break;
     }
 
+    this.ssaTable.set(rhs, sym);
     this.output.push(
       new DependentNode(sym, {
         type: t,

@@ -36,7 +36,7 @@ const Frame: ParentComponent = (props) => {
 const TextRow: ParentComponent = (props) => {
   const c = children(() => props.children);
   return (
-    <div class="flex gap-2 flex-wrap items-stretch justify-around mb-2">
+    <div class="flex gap-2 flex-wrap items-stretch justify-around mb-1">
       {c()}
     </div>
   );
@@ -44,10 +44,9 @@ const TextRow: ParentComponent = (props) => {
 
 const TextInput: Component<{ app: Ctrl }> = (props) => {
   return (
-    <div class="flex flex-col border-2 border-slate-100 rounded p-8 grow">
-      <h2 class="text-xl my-2 mb-4 ">Equations</h2>
+    <Area title="Equations" class={["w-1/3"]}>
       <textarea
-        class="overflow-hidden flex-grow rounded border-2 h-32 border-zinc-200"
+        class="overflow-hidden flex-grow rounded border-2 h-32 w-full border-zinc-200 block"
         value={props.app.text()}
         onKeyUp={(e) => {
           props.app.setText(e.currentTarget.value);
@@ -65,16 +64,15 @@ const TextInput: Component<{ app: Ctrl }> = (props) => {
           {(error) => error().message}
         </Show>
       </div>
-    </div>
+    </Area>
   );
 };
 
 const ParseTree: Component<{ app: Ctrl }> = (props) => {
   return (
-    <div class="border-2 border-slate-100 rounded p-8 grow">
-      <h2 class="mb-4 text-xl">Parse Tree</h2>
+    <Area title="Parse Tree" class={["grow"]}>
       <AST ast={props.app.parseTree.tree} />
-    </div>
+    </Area>
   );
 };
 
@@ -85,8 +83,7 @@ const SolverRow: ParentComponent = (props) => {
 
 const Input: Component<{ app: Ctrl }> = (props) => {
   return (
-    <div class="mt-8 my-2 border-2 border-slate-100 rounded p-8">
-      <h2 class="mb-4 text-xl">Inputs</h2>
+    <Area title="inputs">
       <Inputs
         value={props.app.solverInput.freeVariables}
         bindings={props.app.solverInput.bindings}
@@ -95,19 +92,32 @@ const Input: Component<{ app: Ctrl }> = (props) => {
           props.app.attemptSolve();
         }}
       />
-    </div>
+    </Area>
   );
 };
 
 const Output: Component<{ app: Ctrl }> = (props) => {
   return (
-    <div class="mt-8 my-2 border-2 border-slate-100 rounded p-8">
-      <h2 class="mb-4 text-xl">Outputs</h2>
+    <Area title="Outputs">
       <Outputs
         outputs={props.app.solution.result}
         freeVariables={props.app.solverInput.freeVariables}
         ast={props.app.parseTree.tree}
       />
+    </Area>
+  );
+};
+
+const Area: ParentComponent<{ title: string; class?: string[] }> = (props) => {
+  const c = children(() => props.children);
+  return (
+    <div
+      class={`transition-all my-2 border-2 border-slate-100 rounded p-8 hover:shadow ${
+        props.class ? props.class.join(" ") : ""
+      }`}
+    >
+      <h2 class="mb-4 text-xl">{props.title}</h2>
+      {c()}
     </div>
   );
 };

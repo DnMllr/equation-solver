@@ -18,24 +18,24 @@ export const solve = (input: SolverNode[], bindings: Bindings): SolveResult => {
   while (limit-- > 0 && keepGoing) {
     keepGoing = false;
     for (let i = 0; i < input.length; i++) {
-      input[i] = input[i].attemptBinding(bindings);
+      const next = input[i].attemptBinding(bindings);
+      keepGoing ||= next !== input[i];
+      input[i] = next;
+
       if (input[i] instanceof BoundNode) {
         bindings.set(input[i].symbol, input[i] as BoundNode);
-      } else {
-        keepGoing = true;
       }
     }
   }
 
-  if (limit <= 0) {
-    return {
-      completed: false,
-      result: input,
-    };
-  }
-
   return {
-    completed: true,
+    completed: allBound(input),
     result: input,
   };
+};
+
+const allBound = (input: SolverNode[]): boolean => {
+  return input.reduce((l, r) => {
+    return l && r instanceof BoundNode;
+  }, true);
 };

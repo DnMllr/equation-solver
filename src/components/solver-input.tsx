@@ -1,6 +1,5 @@
-import { Component, For, JSX } from "solid-js";
+import { Component, For, Index, JSX } from "solid-js";
 import { FreeNode } from "../lib/solver/input";
-import { debounce } from "@solid-primitives/scheduled";
 
 export interface InputsProps<I> {
   value: I;
@@ -11,15 +10,15 @@ export interface InputsProps<I> {
 export const Inputs: Component<InputsProps<FreeNode[]>> = (props) => {
   return (
     <div class="flex flex-col gap-4">
-      <For each={props.value}>
+      <Index each={props.value}>
         {(input) => (
           <InputCard
-            value={input}
+            value={input()}
             bindings={props.bindings}
             setBindings={props.setBindings}
           />
         )}
-      </For>
+      </Index>
     </div>
   );
 };

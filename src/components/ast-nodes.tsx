@@ -68,7 +68,7 @@ const OpNode: Component<{ node: BinOpNode; depth: number }> = (props) => {
   return (
     <div class={"rounded border-2 p-1 " + borderFromDepth(props.depth)}>
       <h3 class="text-lg mb-2">
-        <OpSymbol node={props.node} />
+        <OpSymbol type={props.node.type} />
       </h3>
       <div class="flex gap-2 items-center">
         <Equation value={props.node.left} depth={props.depth + 1} />
@@ -78,19 +78,19 @@ const OpNode: Component<{ node: BinOpNode; depth: number }> = (props) => {
   );
 };
 
-const OpSymbol: Component<{ node: BinOpNode }> = (props) => {
+export const OpSymbol: Component<{ type: ASTNodeType }> = (props) => {
   return (
     <Switch>
-      <Match when={props.node.type === ASTNodeType.Add}>
+      <Match when={props.type === ASTNodeType.Add}>
         <AiOutlinePlusCircle />
       </Match>
-      <Match when={props.node.type === ASTNodeType.Sub}>
+      <Match when={props.type === ASTNodeType.Sub}>
         <AiOutlineMinusCircle />
       </Match>
-      <Match when={props.node.type === ASTNodeType.Div}>
+      <Match when={props.type === ASTNodeType.Div}>
         <FiDivideCircle />
       </Match>
-      <Match when={props.node.type === ASTNodeType.Mul}>
+      <Match when={props.type === ASTNodeType.Mul}>
         <AiOutlineCloseCircle />
       </Match>
     </Switch>

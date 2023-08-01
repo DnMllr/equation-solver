@@ -1,12 +1,23 @@
-import { Component, For, Match, Show, Switch } from "solid-js";
+import {
+  Component,
+  Index,
+  Match,
+  ParentComponent,
+  Show,
+  Switch,
+  children,
+} from "solid-js";
 import { Equations } from "../lib/parser";
 import {
+  Calculation,
   CalculationType,
   DependentNode,
   FreeNode,
   InputNodeType,
   SolverNode,
 } from "../lib/solver/input";
+import { OpSymbol } from "./ast-nodes";
+import { ASTNodeType } from "../lib/ast";
 
 export interface OutputsProps {
   outputs: SolverNode[];
@@ -32,138 +43,165 @@ export const Outputs: Component<OutputsProps> = (props) => {
   };
 
   return (
-    <div class="flex gap-8 flex-wrap">
-      <For each={values()}>
+    <div class="flex gap-8 flex-wrap text-sm">
+      <Index each={values()}>
         {(node) => (
-          <div class={styleNode(node, isImportant(node.symbol))}>
-            <NodeTitle node={node} />
-            <NodeContent node={node} />
+          <div
+            class={
+              "transition-all hover:opacity-100 " +
+              (isImportant(node().symbol) ? "" : "opacity-20")
+            }
+          >
+            <OutputType node={node()} />
+            <div class={styleNode(node())}>
+              <NodeTitle node={node()} />
+              <NodeContent node={node()} />
+            </div>
           </div>
         )}
-      </For>
+      </Index>
     </div>
   );
 };
 
 const NodeTitle: Component<{ node: SolverNode }> = (props) => {
   return (
-    <div class="text-sm">
-      <OutputType type={props.node.type} />
-      <h2 class="text-lg p-2 rounded border-black border-2">
-        {props.node.symbol}
-      </h2>
-    </div>
+    <h2 class={"py-2 px-4 border-b-2 " + colors(props.node.type)}>
+      {props.node.symbol}
+    </h2>
   );
 };
 
-const OutputType: Component<{ type: InputNodeType }> = (props) => {
+const OutputType: Component<{ node: SolverNode }> = (props) => {
   return (
-    <Switch>
-      <Match when={props.type === InputNodeType.Bound}>Bound Variable</Match>
-      <Match when={props.type === InputNodeType.Free}>Free Variable</Match>
-      <Match when={props.type === InputNodeType.Dependent}>
-        Computed Variable
-      </Match>
-    </Switch>
+    <div class="text-xs flex justify-between">
+      <Switch>
+        <Match when={props.node.type === InputNodeType.Bound}>
+          <div>Bound</div>
+        </Match>
+        <Match when={props.node.type === InputNodeType.Free}>
+          <div>Free</div>
+        </Match>
+        <Match when={props.node.type === InputNodeType.Dependent}>
+          <div>Dependent</div>
+          <Title type={(props.node as DependentNode).calculation.type} />
+        </Match>
+      </Switch>
+    </div>
   );
 };
 
 const NodeContent: Component<{ node: SolverNode }> = (props) => {
   return (
-    <div class="flex flex-col justify-center items-center">
-      <Show when={props.node.type === InputNodeType.Bound ? props.node : false}>
-        {(node) => (
-          <div>
-            <div class="text-sm">Value:</div>
-            <div>{node().value.toFixed(2)}</div>
-          </div>
-        )}
-      </Show>
-
-      <Show
+    <Switch>
+      <Match
+        when={props.node.type === InputNodeType.Bound ? props.node : false}
+      >
+        {(node) => <NodeValue>{node().value.toFixed(2)}</NodeValue>}
+      </Match>
+      <Match
         when={props.node.type === InputNodeType.Dependent ? props.node : false}
       >
-        {(output) => <Calculation node={output()} />}
-      </Show>
-
-      <Show when={props.node.type === InputNodeType.Free}>Requires Input</Show>
-    </div>
-  );
-};
-
-const Calculation: Component<{ node: DependentNode }> = (props) => {
-  return (
-    <Switch>
-      <Match when={props.node.calculation.type === CalculationType.Add}>
-        <div class="text-sm">
-          <div>Add Node</div>
-          <div class="grow flex flex-col justify-center items-center">
-            <div>{props.node.calculation.dependencies[0]}</div>
-            <div>+</div>
-            <div>{props.node.calculation.dependencies[1]}</div>
-          </div>
-        </div>
+        {(output) => <Card calculation={output().calculation} />}
       </Match>
-      <Match when={props.node.calculation.type === CalculationType.Sub}>
-        <div>
-          <div class="text-sm">Sub Node</div>
-          <div class="flex flex-col justify-center items-center">
-            <div>{props.node.calculation.dependencies[0]}</div>
-            <div>-</div>
-            <div>{props.node.calculation.dependencies[1]}</div>
-          </div>
-        </div>
-      </Match>
-      <Match when={props.node.calculation.type === CalculationType.Mul}>
-        <div class="text-sm">
-          <div>Mul Node</div>
-          <div class="flex flex-col justify-center items-center">
-            <div>{props.node.calculation.dependencies[0]}</div>
-            <div>*</div>
-            <div>{props.node.calculation.dependencies[1]}</div>
-          </div>
-        </div>
-      </Match>
-      <Match when={props.node.calculation.type === CalculationType.Div}>
-        <div class="text-sm">
-          <div>Div Node</div>
-          <div class="flex flex-col justify-center items-center">
-            <div>{props.node.calculation.dependencies[0]}</div>
-            <div>/</div>
-            <div>{props.node.calculation.dependencies[1]}</div>
-          </div>
-        </div>
-      </Match>
-      <Match when={props.node.calculation.type === CalculationType.Ref}>
-        <div class="text-sm">
-          <div>Ref Node</div>
-          <div class="flex justify-center items-center gap-2">
-            <div>→</div>
-            <div>{props.node.calculation.dependencies}</div>
-          </div>
-        </div>
+      <Match when={props.node.type === InputNodeType.Free}>
+        <NodeValue>Requires Input</NodeValue>
       </Match>
     </Switch>
   );
 };
 
-const styleNode = (output: SolverNode, isImportant: boolean): string => {
-  let classes = "flex flex-col justify-between rounded border-2 p-4 w-44 h-48 ";
-  switch (output.type) {
+const NodeValue: ParentComponent = (props) => {
+  const c = children(() => props.children);
+  return (
+    <div class="text-xl px-2 py-4 flex flex-col grow justify-center items-center">
+      {c()}
+    </div>
+  );
+};
+
+const Card: Component<{ calculation: Calculation }> = (props) => {
+  return (
+    <Dependencies calculation={props.calculation}>
+      <Operator type={props.calculation.type} />
+    </Dependencies>
+  );
+};
+
+const Title: Component<{ type: CalculationType }> = (props) => {
+  return (
+    <div>
+      <Switch>
+        <Match when={props.type === CalculationType.Ref}>Ref</Match>
+        <Match when={props.type === CalculationType.Div}>Div</Match>
+        <Match when={props.type === CalculationType.Mul}>Mul</Match>
+        <Match when={props.type === CalculationType.Add}>Add</Match>
+        <Match when={props.type === CalculationType.Sub}>Sub</Match>
+      </Switch>
+    </div>
+  );
+};
+
+const Operator: Component<{ type: CalculationType }> = (props) => {
+  return (
+    <div class="flex justify-center items-center">
+      <Switch>
+        <Match when={props.type === CalculationType.Ref}>&</Match>
+        <Match when={props.type === CalculationType.Div}>
+          <OpSymbol type={ASTNodeType.Div} />
+        </Match>
+        <Match when={props.type === CalculationType.Mul}>
+          <OpSymbol type={ASTNodeType.Mul} />
+        </Match>
+        <Match when={props.type === CalculationType.Add}>
+          <OpSymbol type={ASTNodeType.Add} />
+        </Match>
+        <Match when={props.type === CalculationType.Sub}>
+          <OpSymbol type={ASTNodeType.Sub} />
+        </Match>
+      </Switch>
+    </div>
+  );
+};
+
+const Dependencies: ParentComponent<{ calculation: Calculation }> = (props) => {
+  const c = children(() => props.children);
+  return (
+    <div class="flex grow flex-col justify-center items-stretch gap-2 text-lg px-4 py-2">
+      <Show
+        when={props.calculation.type !== CalculationType.Ref}
+        fallback={
+          <div class="flex flex-row justify-center items-center">
+            {c()} {props.calculation.dependencies}
+          </div>
+        }
+      >
+        <div class="flex items-center justify-start">
+          {props.calculation.dependencies[0]}
+        </div>
+        {c()}
+        <div class="flex items-center justify-end">
+          {props.calculation.dependencies[1]}
+        </div>
+      </Show>
+    </div>
+  );
+};
+
+const styleNode = (output: SolverNode): string => {
+  return (
+    "flex flex-col rounded border-2 w-44 h-48 transition-all " +
+    colors(output.type)
+  );
+};
+
+const colors = (t: InputNodeType): string => {
+  switch (t) {
     case InputNodeType.Bound:
-      classes += " border-green-500 bg-green-100 ";
-      break;
+      return " border-green-500 bg-green-100 ";
     case InputNodeType.Free:
-      classes += " border-red-500 bg-red-100 ";
-      break;
+      return " border-red-500 bg-red-100 ";
     case InputNodeType.Dependent:
-      classes += " border-zinc-200 bg-zinc-100 ";
-      break;
+      return " border-zinc-200 bg-zinc-100 ";
   }
-
-  if (!isImportant) {
-    classes += " opacity-20 ";
-  }
-
-  return classes;
 };

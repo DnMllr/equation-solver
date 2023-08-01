@@ -4,4 +4,11 @@ module.exports = {
     tailwindcss: {},
     autoprefixer: {},
   },
+  theme: {
+    extend: {
+      boxShadow: {
+        'light': '20px 20px 60px #bebebe, -20px -20px 60px #ffffff'
+      }
+    }
+  }
 };
